@@ -34,7 +34,7 @@ bot.command('start', async (ctx) => {
   const greeting = memory.user.name ? `Hola, ${memory.user.name}.` : 'Hola.';
 
   await ctx.reply(
-    `🦀 *MiniClaw*\n\n${greeting}\n\n` +
+    `🦀 *Calabacilla*\n\n${greeting}\n\n` +
     '*Comandos:*\n' +
     '`/new` — Nueva conversación\n' +
     '`/status` — Estado del sistema\n' +

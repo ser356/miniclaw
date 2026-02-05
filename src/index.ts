@@ -3,7 +3,7 @@ import { bot } from './bot.js';
 import { healthCheck } from './llm.js';
 
 async function main() {
-  console.log('🦞 MiniClaw - Starting...\n');
+  console.log('🦞 Calabacilla - Starting...\n');
   
   // Validate config
   try {

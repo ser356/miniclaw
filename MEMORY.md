@@ -1,6 +1,6 @@
-# MiniClaw — Memory
+# Calabacilla — Memory
 
-MiniClaw tiene dos tipos de memoria:
+Calabacilla tiene dos tipos de memoria:
 
 ## Memoria de sesión (temporal)
 
@@ -30,7 +30,7 @@ Datos que sobreviven reinicios:
 
 ## Cómo funciona
 
-1. Al iniciar, MiniClaw lee `SOUL.md` (su personalidad)
+1. Al iniciar, Calabacilla lee `SOUL.md` (su personalidad)
 2. También lee `data/memory.json` (lo que recuerda de ti)
 3. Ambos se incluyen en el system prompt
 4. Cada respuesta tiene contexto de quién eres

@@ -33,7 +33,7 @@ export interface Message {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL_PATH = join(__dirname, '..', 'SOUL.md');
 
-const FALLBACK_PROMPT = `Eres MiniClaw, un micro agente local. Directo y útil.`;
+const FALLBACK_PROMPT = `Eres Calabacilla, un micro agente local. Directo y útil.`;
 
 function loadSoul(): string {
   try {

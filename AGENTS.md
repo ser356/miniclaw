@@ -1,6 +1,6 @@
-# MiniClaw — Convenciones
+# Calabacilla — Convenciones
 
-> Guía para trabajar en el código de MiniClaw.
+> Guía para trabajar en el código de Calabacilla.
 
 ## Filosofía
 
@@ -53,6 +53,6 @@ Por ahora manual. Si crece, añadir vitest.
 
 ## Regla de oro
 
-Antes de añadir algo, pregunta: ¿MiniClaw lo necesita para ser útil?
+Antes de añadir algo, pregunta: ¿Calabacilla lo necesita para ser útil?
 
 Si la respuesta es no, no lo añadas.

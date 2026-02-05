@@ -1,5 +1,5 @@
 {
-  "name": "miniclaw",
+  "name": "Calabacilla",
   "version": "1.0.0",
   "description": "Ultra minimal AI assistant for Telegram with local LLM (LM Studio)",
   "type": "module",

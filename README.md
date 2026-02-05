@@ -27,7 +27,7 @@ Inspirado por [OpenClaw](https://github.com/openclaw/openclaw), reducido a lo es
 
 ```bash
 git clone <repo-url>
-cd miniclaw
+cd Calabacilla
 pnpm install
 ```
 
@@ -77,7 +77,7 @@ pnpm start
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Telegram   │────▶│  MiniClaw   │────▶│  LM Studio  │
+│  Telegram   │────▶│  Calabacilla   │────▶│  LM Studio  │
 │    User     │◀────│   (grammY)  │◀────│  (local)    │
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
@@ -85,14 +85,14 @@ pnpm start
 ## Project Structure
 
 ```
-miniclaw/
+Calabacilla/
 ├── src/
 │   ├── index.ts    # Entry point
 │   ├── config.ts   # Configuration
 │   ├── bot.ts      # Telegram bot logic
 │   ├── llm.ts      # LM Studio client + system prompt
 │   └── sessions.ts # Conversation memory
-├── SOUL.md         # Quién es MiniClaw
+├── SOUL.md         # Quién es Calabacilla
 ├── IDENTITY.md     # Datos de identidad
 ├── MEMORY.md       # Cómo funciona su memoria
 ├── AGENTS.md       # Convenciones de desarrollo
@@ -103,7 +103,7 @@ miniclaw/
 
 ## Soul Files
 
-MiniClaw tiene archivos que definen su identidad:
+Calabacilla tiene archivos que definen su identidad:
 
 | Archivo | Propósito |
 |---------|-----------|
@@ -150,4 +150,4 @@ MIT
 
 ---
 
-*Less is more. 🦞*
+*Less is more. 🎃*
