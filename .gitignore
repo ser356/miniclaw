@@ -4,3 +4,6 @@ dist/
 *.log
 .DS_Store
 pnpm-debug.log
+
+# Persistent memory (private)
+data/

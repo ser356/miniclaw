@@ -2,6 +2,7 @@ import { Bot, Context } from 'grammy';
 import { config } from './config.js';
 import { chat, healthCheck } from './llm.js';
 import { getSession, addMessage, clearSession, getActiveSessionCount } from './sessions.js';
+import { setUserName, addFact, loadMemory, clearMemory, forgetFact } from './memory.js';
 
 export const bot = new Bot(config.telegram.token);
 
@@ -19,13 +20,19 @@ bot.command('start', async (ctx) => {
     await ctx.reply('⛔ No autorizado');
     return;
   }
-  
+
+  const memory = loadMemory();
+  const greeting = memory.user.name ? `Hola, ${memory.user.name}.` : 'Hola.';
+
   await ctx.reply(
-    '🤖 *MiniClaw* - Asistente IA Local\n\n' +
-    'Comandos:\n' +
-    '• `/new` - Nueva conversación\n' +
-    '• `/status` - Estado del sistema\n\n' +
-    'Escríbeme lo que necesites.',
+    `🦀 *MiniClaw*\n\n${greeting}\n\n` +
+    '*Comandos:*\n' +
+    '`/new` — Nueva conversación\n' +
+    '`/status` — Estado del sistema\n' +
+    '`/iam <nombre>` — Dime tu nombre\n' +
+    '`/remember <algo>` — Recordar algo\n' +
+    '`/memory` — Ver qué recuerdo\n' +
+    '`/forget` — Olvidar todo',
     { parse_mode: 'Markdown' }
   );
 });
@@ -41,10 +48,10 @@ bot.command('new', async (ctx) => {
 // /status command
 bot.command('status', async (ctx) => {
   if (!isAllowed(ctx.from?.id || 0)) return;
-  
+
   const llmOk = await healthCheck();
   const sessions = getActiveSessionCount();
-  
+
   await ctx.reply(
     `📊 *Estado*\n\n` +
     `• LM Studio: ${llmOk ? '✅ Online' : '❌ Offline'}\n` +
@@ -52,6 +59,68 @@ bot.command('status', async (ctx) => {
     `• Sesiones activas: ${sessions}`,
     { parse_mode: 'Markdown' }
   );
+});
+
+// /iam command - set user name
+bot.command('iam', async (ctx) => {
+  if (!isAllowed(ctx.from?.id || 0)) return;
+
+  const name = ctx.message?.text?.replace('/iam', '').trim();
+  if (!name) {
+    await ctx.reply('Uso: `/iam Tu Nombre`', { parse_mode: 'Markdown' });
+    return;
+  }
+
+  setUserName(name);
+  await ctx.reply(`Guardado. Ahora sé que te llamas ${name}.`);
+});
+
+// /remember command - save a fact
+bot.command('remember', async (ctx) => {
+  if (!isAllowed(ctx.from?.id || 0)) return;
+
+  const fact = ctx.message?.text?.replace('/remember', '').trim();
+  if (!fact) {
+    await ctx.reply('Uso: `/remember algo que quieras que recuerde`', { parse_mode: 'Markdown' });
+    return;
+  }
+
+  addFact(fact);
+  await ctx.reply(`Guardado: "${fact}"`);
+});
+
+// /memory command - show what I remember
+bot.command('memory', async (ctx) => {
+  if (!isAllowed(ctx.from?.id || 0)) return;
+
+  const memory = loadMemory();
+  const parts: string[] = [];
+
+  if (memory.user.name) {
+    parts.push(`*Tu nombre:* ${memory.user.name}`);
+  }
+
+  if (memory.facts.length > 0) {
+    parts.push('*Recuerdo:*');
+    memory.facts.forEach((fact, i) => {
+      parts.push(`${i + 1}. ${fact}`);
+    });
+  }
+
+  if (parts.length === 0) {
+    await ctx.reply('No recuerdo nada todavía. Usa `/iam` o `/remember` para enseñarme.', { parse_mode: 'Markdown' });
+    return;
+  }
+
+  await ctx.reply(parts.join('\n'), { parse_mode: 'Markdown' });
+});
+
+// /forget command - clear memory
+bot.command('forget', async (ctx) => {
+  if (!isAllowed(ctx.from?.id || 0)) return;
+
+  clearMemory();
+  await ctx.reply('Memoria borrada. Empezamos de cero.');
 });
 
 // Handle text messages

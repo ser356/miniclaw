@@ -1,8 +1,10 @@
-# 🦞 MiniClaw
+# 🦀 MiniClaw
 
-**Ultra minimal AI assistant for Telegram powered by local LLMs via LM Studio**
+**Un micro agente con alma.**
 
-Inspired by [OpenClaw](https://github.com/openclaw/openclaw) but stripped down to the absolute essentials. No frills, just works.
+No es solo un bot — es el código fuente de un asistente personal mínimo. Diseñado para correr en local con Ministral 14B. Privacidad total, sin APIs externas.
+
+Inspirado por [OpenClaw](https://github.com/openclaw/openclaw), reducido a lo esencial.
 
 ## Features
 
@@ -88,12 +90,29 @@ miniclaw/
 │   ├── index.ts    # Entry point
 │   ├── config.ts   # Configuration
 │   ├── bot.ts      # Telegram bot logic
-│   ├── llm.ts      # LM Studio client
+│   ├── llm.ts      # LM Studio client + system prompt
 │   └── sessions.ts # Conversation memory
+├── SOUL.md         # Quién es MiniClaw
+├── IDENTITY.md     # Datos de identidad
+├── MEMORY.md       # Cómo funciona su memoria
+├── AGENTS.md       # Convenciones de desarrollo
 ├── .env.example
 ├── package.json
 └── tsconfig.json
 ```
+
+## Soul Files
+
+MiniClaw tiene archivos que definen su identidad:
+
+| Archivo | Propósito |
+|---------|-----------|
+| `SOUL.md` | Su personalidad y valores |
+| `IDENTITY.md` | Qué es, sus limitaciones |
+| `MEMORY.md` | Cómo gestiona el contexto |
+| `AGENTS.md` | Convenciones para contribuir |
+
+El system prompt en `src/llm.ts` es la versión condensada que el modelo recibe.
 
 ## Security
 
