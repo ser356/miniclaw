@@ -1,4 +1,4 @@
-# 🦀 MiniClaw
+# 🎃 Calabacilla
 
 **Un micro agente con alma.**
 
