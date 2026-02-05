@@ -1,4 +1,5 @@
 import { Bot, Context } from 'grammy';
+import { PDFParse } from 'pdf-parse';
 import { config } from './config.js';
 import { chat, healthCheck, type MessageContent } from './llm.js';
 import { getSession, addMessage, clearSession, getActiveSessionCount } from './sessions.js';
@@ -174,6 +175,94 @@ bot.on('message:photo', async (ctx) => {
   } catch (error) {
     console.error('Error processing image:', error);
     await ctx.reply('❌ Error al procesar la imagen. ¿Soporta visión el modelo cargado?');
+  }
+});
+
+// Supported text document extensions
+const TEXT_EXTENSIONS = ['.txt', '.md', '.json', '.csv', '.xml', '.html', '.css', '.js', '.ts', '.py', '.sh'];
+
+// Download file from Telegram and get buffer
+async function getFileBuffer(ctx: Context, fileId: string): Promise<Buffer> {
+  const file = await ctx.api.getFile(fileId);
+  const url = `https://api.telegram.org/file/bot${config.telegram.token}/${file.file_path}`;
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  return Buffer.from(buffer);
+}
+
+// Extract text from document based on type
+async function extractDocumentText(buffer: Buffer, fileName: string): Promise<string | null> {
+  const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+
+  if (ext === '.pdf') {
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    return result.text;
+  }
+
+  if (TEXT_EXTENSIONS.includes(ext)) {
+    return buffer.toString('utf-8');
+  }
+
+  return null;
+}
+
+// Handle document messages
+bot.on('message:document', async (ctx) => {
+  const userId = ctx.from?.id || 0;
+  const chatId = ctx.chat.id;
+
+  if (!isAllowed(userId)) {
+    await ctx.reply('⛔ No autorizado');
+    return;
+  }
+
+  const doc = ctx.message.document;
+  const fileName = doc.file_name || 'documento';
+  const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+
+  // Check if supported
+  if (ext !== '.pdf' && !TEXT_EXTENSIONS.includes(ext)) {
+    await ctx.reply(
+      `❌ Formato no soportado: \`${ext}\`\n\n` +
+      `Formatos válidos: .pdf, ${TEXT_EXTENSIONS.join(', ')}`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
+  await ctx.replyWithChatAction('typing');
+
+  try {
+    const buffer = await getFileBuffer(ctx, doc.file_id);
+    const text = await extractDocumentText(buffer, fileName);
+
+    if (!text || text.trim().length === 0) {
+      await ctx.reply('❌ No pude extraer texto del documento');
+      return;
+    }
+
+    const caption = ctx.message.caption || 'Resume este documento';
+    const truncatedText = text.length > 15000 ? text.substring(0, 15000) + '\n\n[...truncado]' : text;
+    const userMessage = `[Documento: ${fileName}]\n\n${truncatedText}\n\n---\n${caption}`;
+
+    // Get session history
+    const history = getSession(chatId);
+    addMessage(chatId, { role: 'user', content: `[Documento: ${fileName}] ${caption}` });
+
+    // Send to LLM
+    const messages = [...history, { role: 'user' as const, content: userMessage }];
+    const response = await chat(messages);
+
+    if (response) {
+      addMessage(chatId, { role: 'assistant', content: response });
+      await sendLongMessage(ctx, response);
+    } else {
+      await ctx.reply('❌ Sin respuesta del modelo');
+    }
+  } catch (error) {
+    console.error('Error processing document:', error);
+    await ctx.reply('❌ Error al procesar el documento');
   }
 });
 
