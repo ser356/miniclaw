@@ -11,9 +11,22 @@ const client = new OpenAI({
   apiKey: 'lm-studio', // LM Studio doesn't require a real key
 });
 
+// Vision API content types
+export interface TextContent {
+  type: 'text';
+  text: string;
+}
+
+export interface ImageContent {
+  type: 'image_url';
+  image_url: { url: string };
+}
+
+export type MessageContent = string | (TextContent | ImageContent)[];
+
 export interface Message {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: MessageContent;
 }
 
 // Load soul from SOUL.md at startup
@@ -57,7 +70,7 @@ export async function chat(
     // Streaming mode
     const stream = await client.chat.completions.create({
       model: config.lmStudio.model,
-      messages: fullMessages,
+      messages: fullMessages as any,
       max_tokens: config.lmStudio.maxTokens,
       stream: true,
     });
@@ -75,7 +88,7 @@ export async function chat(
     // Non-streaming mode
     const response = await client.chat.completions.create({
       model: config.lmStudio.model,
-      messages: fullMessages,
+      messages: fullMessages as any,
       max_tokens: config.lmStudio.maxTokens,
     });
 

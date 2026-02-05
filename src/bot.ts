@@ -1,8 +1,17 @@
 import { Bot, Context } from 'grammy';
 import { config } from './config.js';
-import { chat, healthCheck } from './llm.js';
+import { chat, healthCheck, type MessageContent } from './llm.js';
 import { getSession, addMessage, clearSession, getActiveSessionCount } from './sessions.js';
 import { setUserName, addFact, loadMemory, clearMemory, forgetFact } from './memory.js';
+
+// Download image from Telegram and convert to base64
+async function getImageBase64(ctx: Context, fileId: string): Promise<string> {
+  const file = await ctx.api.getFile(fileId);
+  const url = `https://api.telegram.org/file/bot${config.telegram.token}/${file.file_path}`;
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  return Buffer.from(buffer).toString('base64');
+}
 
 export const bot = new Bot(config.telegram.token);
 
@@ -123,6 +132,51 @@ bot.command('forget', async (ctx) => {
   await ctx.reply('Memoria borrada. Empezamos de cero.');
 });
 
+// Handle photo messages (vision)
+bot.on('message:photo', async (ctx) => {
+  const userId = ctx.from?.id || 0;
+  const chatId = ctx.chat.id;
+
+  if (!isAllowed(userId)) {
+    await ctx.reply('⛔ No autorizado');
+    return;
+  }
+
+  await ctx.replyWithChatAction('typing');
+
+  try {
+    // Get highest resolution photo
+    const photos = ctx.message.photo;
+    const photo = photos[photos.length - 1];
+    const base64 = await getImageBase64(ctx, photo.file_id);
+    const caption = ctx.message.caption || 'Describe esta imagen';
+
+    // Build multimodal content
+    const content: MessageContent = [
+      { type: 'text', text: caption },
+      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
+    ];
+
+    // Get session history
+    const history = getSession(chatId);
+    addMessage(chatId, { role: 'user', content: `[Imagen] ${caption}` });
+
+    // Send to LLM with image
+    const messages = [...history, { role: 'user' as const, content }];
+    const response = await chat(messages);
+
+    if (response) {
+      addMessage(chatId, { role: 'assistant', content: response });
+      await sendLongMessage(ctx, response);
+    } else {
+      await ctx.reply('❌ Sin respuesta del modelo');
+    }
+  } catch (error) {
+    console.error('Error processing image:', error);
+    await ctx.reply('❌ Error al procesar la imagen. ¿Soporta visión el modelo cargado?');
+  }
+});
+
 // Handle text messages
 bot.on('message:text', async (ctx) => {
   const userId = ctx.from?.id || 0;
@@ -167,19 +221,29 @@ bot.on('message:text', async (ctx) => {
   }
 });
 
+// Send a message with Markdown, fallback to plain text if malformed
+async function sendWithMarkdown(ctx: Context, text: string): Promise<void> {
+  try {
+    await ctx.reply(text, { parse_mode: 'Markdown' });
+  } catch {
+    // Markdown malformed, send as plain text
+    await ctx.reply(text);
+  }
+}
+
 // Split long messages for Telegram (4096 char limit)
 async function sendLongMessage(ctx: Context, text: string): Promise<void> {
   const MAX_LENGTH = 4000;
-  
+
   if (text.length <= MAX_LENGTH) {
-    await ctx.reply(text);
+    await sendWithMarkdown(ctx, text);
     return;
   }
-  
+
   // Split by paragraphs first
   const chunks: string[] = [];
   let current = '';
-  
+
   for (const line of text.split('\n')) {
     if (current.length + line.length + 1 > MAX_LENGTH) {
       if (current) chunks.push(current);
@@ -189,10 +253,10 @@ async function sendLongMessage(ctx: Context, text: string): Promise<void> {
     }
   }
   if (current) chunks.push(current);
-  
+
   // Send each chunk
   for (const chunk of chunks) {
-    await ctx.reply(chunk);
+    await sendWithMarkdown(ctx, chunk);
   }
 }
 
